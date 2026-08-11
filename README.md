@@ -1,93 +1,84 @@
-# fmnstdataDL
 # Fashion MNIST Classification with PyTorch
 
-A simple neural network project for classifying **Fashion MNIST** images using **PyTorch**.
+A deep learning project that classifies Fashion MNIST clothing images using a fully connected neural network built with **PyTorch**.
 
-The project loads a CSV version of the Fashion MNIST dataset, preprocesses the image features, builds a fully connected neural network, trains it using stochastic gradient descent, and evaluates its classification accuracy on a held-out test set.
+The project started as a small-scale experiment using approximately **6,000 Fashion MNIST images**, trained on a CPU. This initial model achieved around **81% accuracy**. To improve the model, the full Fashion MNIST dataset was downloaded using the **Kaggle API**, providing **60,000 training images** and 10,000 test images. The training process was then moved to a **GPU** to efficiently handle the larger dataset.
+
+With the full training dataset, the model achieved an accuracy of **97.95625%**, demonstrating a significant improvement over the initial 81% result.
 
 ## 📌 Project Overview
 
-Fashion MNIST contains grayscale images of clothing items. Each image is **28 × 28 pixels**, giving **784 input features** per image.
+This project demonstrates an end-to-end image classification workflow using PyTorch:
 
-This project demonstrates a basic end-to-end PyTorch workflow:
-
-* Load a Fashion MNIST CSV dataset
-* Visualize sample images
-* Split the data into training and test sets
-* Normalize pixel values
-* Create a custom PyTorch `Dataset`
-* Create `DataLoader`s for batching
-* Build a feed-forward neural network
-* Train the model using SGD
-* Evaluate the model using classification accuracy
-
-## 🗂️ Project Structure
-
-```text
-.
-├── fashion_mnist_pytorch.ipynb
-├── fmnist_small.csv
-└── README.md
-```
-
-## 🛠️ Technologies Used
-
-* Python
-* PyTorch
-* Pandas
-* Scikit-learn
-* Matplotlib
+* Downloading the Fashion MNIST dataset using the Kaggle API
+* Loading the dataset with Pandas
+* Visualizing Fashion MNIST images
+* Separating image pixels from class labels
+* Normalizing pixel values
+* Creating custom PyTorch `Dataset` and `DataLoader` objects
+* Building a fully connected neural network
+* Training the model using stochastic gradient descent
+* Using GPU acceleration for training
+* Evaluating the model on unseen test data
+* Comparing model performance between a small and full dataset
 
 ## 📊 Dataset
 
-The notebook expects a CSV file named:
+The project uses the **Fashion MNIST** dataset.
 
-```text
-fmnist_small.csv
-```
+Each image is a grayscale **28 × 28 pixel** image, resulting in **784 input features** when flattened.
 
-The first column contains the **class labels**, while the remaining **784 columns** contain the pixel values.
+The dataset contains:
 
-Each image can be reshaped from the 784 pixel values into:
+* **60,000 training images**
+* **10,000 test images**
+* **10 clothing classes**
+* **784 pixel features per image**
 
-```text
-28 × 28
-```
+The first column contains the class label, while the remaining 784 columns represent the pixel values.
 
-The notebook also visualizes the first 16 images in a 4 × 4 grid.
+The 10 classes are:
+
+| Label | Clothing Item |
+| ----: | ------------- |
+|     0 | T-shirt/top   |
+|     1 | Trouser       |
+|     2 | Pullover      |
+|     3 | Dress         |
+|     4 | Coat          |
+|     5 | Sandal        |
+|     6 | Shirt         |
+|     7 | Sneaker       |
+|     8 | Bag           |
+|     9 | Ankle boot    |
 
 ## 🔄 Data Preprocessing
 
-The dataset is separated into features and labels:
+The image data is separated into features and labels:
 
 ```python
-X = df.iloc[:, 1:].values
-y = df.iloc[:, 0].values
+X_train = train_df.iloc[:, 1:].values
+y_train = train_df.iloc[:, 0].values
+
+X_test = test_df.iloc[:, 1:].values
+y_test = test_df.iloc[:, 0].values
 ```
 
-The data is split into training and test sets using an **80/20 split**:
-
-```python
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y,
-    test_size=0.2,
-    random_state=42
-)
-```
-
-Pixel values are normalized from the original `0–255` range to approximately `0–1`:
+Pixel values originally range from **0 to 255** and are normalized to approximately **0 to 1**:
 
 ```python
 X_train = X_train / 255.0
 X_test = X_test / 255.0
 ```
 
+The 784 pixel values represent the flattened version of each 28 × 28 image.
+
 ## 🧠 Neural Network Architecture
 
-The model is a fully connected feed-forward neural network:
+The project uses a fully connected feed-forward neural network:
 
 ```text
-Input: 784 features
+784 Input Features
         ↓
 Linear(784 → 128)
         ↓
@@ -99,10 +90,10 @@ ReLU
         ↓
 Linear(64 → 10)
         ↓
-10 class outputs
+10 Class Outputs
 ```
 
-The model is implemented using `torch.nn.Sequential`:
+The model is implemented using PyTorch:
 
 ```python
 class MyNN(nn.Module):
@@ -122,46 +113,21 @@ class MyNN(nn.Module):
         return self.model(x)
 ```
 
-The final layer produces **10 outputs**, corresponding to the 10 Fashion MNIST classes.
+The final layer contains 10 outputs, corresponding to the 10 Fashion MNIST classes.
 
-## ⚙️ Training Configuration
+## ⚙️ Training
 
-The notebook uses the following hyperparameters:
+The model uses:
 
-| Parameter        |              Value |
-| ---------------- | -----------------: |
-| Epochs           |                100 |
-| Learning Rate    |                0.1 |
-| Batch Size       |                 32 |
-| Optimizer        |                SGD |
-| Loss Function    | Cross Entropy Loss |
-| Train/Test Split |              80/20 |
-| Random Seed      |                 42 |
+* **Optimizer:** SGD
+* **Loss Function:** Cross Entropy Loss
+* **Learning Rate:** 0.1
+* **Batch Size:** 32
+* **Epochs:** 100
+* **Random Seed:** 42
+* **Hardware:** GPU for the full-dataset experiment
 
-The loss function is:
-
-```python
-criterion = nn.CrossEntropyLoss()
-```
-
-and the optimizer is:
-
-```python
-optimizer = optim.SGD(
-    model.parameters(),
-    lr=0.1
-)
-```
-
-## 🚂 Training
-
-During each training iteration, the model:
-
-1. Performs a forward pass
-2. Calculates the cross-entropy loss
-3. Clears previous gradients
-4. Performs backpropagation
-5. Updates model parameters using SGD
+The training process performs a forward pass, calculates the loss, performs backpropagation, and updates the model parameters.
 
 ```python
 outputs = model(batch_features)
@@ -173,95 +139,91 @@ loss.backward()
 optimizer.step()
 ```
 
-The average loss for each epoch is printed during training.
+## 🚀 CPU vs GPU and Dataset Comparison
 
-## 📈 Evaluation
+An important part of this project was comparing the initial small-scale experiment with the full-dataset experiment.
 
-After training, the model is evaluated without calculating gradients:
+### Initial Experiment
 
-```python
-model.eval()
+The first version used approximately **6,000 images** and was trained on a **CPU**.
 
-total = 0
-correct = 0
+**Accuracy: ~81%**
 
-with torch.no_grad():
+### Full Dataset Experiment
 
-    for batch_features, batch_labels in test_loader:
+The dataset was then downloaded through the **Kaggle API**, giving access to the full **60,000-image training set**. The model was moved to a **GPU** for training.
 
-        outputs = model(batch_features)
+**Accuracy: 97.95625%**
 
-        _, predicted = torch.max(outputs, 1)
+| Experiment   | Training Data | Hardware |      Accuracy |
+| ------------ | ------------: | -------- | ------------: |
+| Initial      | ~6,000 images | CPU      |          ~81% |
+| Full Dataset | 60,000 images | GPU      | **97.95625%** |
 
-        total += batch_labels.shape[0]
-        correct += (predicted == batch_labels).sum().item()
+The results show a substantial improvement when training on the full dataset. The GPU primarily provides faster and more efficient computation, while the increase in training data gives the neural network significantly more examples from which to learn.
 
-print(f"Accuracy: {100 * correct / total:.2f}%")
-```
-
-Accuracy is calculated as:
-
-```text
-Accuracy = Correct Predictions / Total Predictions
-```
-
-and displayed as a percentage.
 ## 📈 Results
 
-The initial experiment was performed using a smaller subset of approximately **6,000 Fashion-MNIST images** and was trained on the CPU. This achieved an accuracy of approximately **81%**.
+The final model achieved:
 
-The dataset was then downloaded using the **Kaggle API**, providing the full Fashion-MNIST dataset with **60,000 training images**. The training pipeline was moved to a **GPU**, significantly reducing training time and allowing the larger dataset to be used efficiently.
+**97.95625% accuracy**
 
-Using the full training dataset, the neural network achieved an accuracy of:
+on the evaluation dataset.
 
-**97.95625%**
+Compared with the initial **~81% accuracy**, this represents an improvement of approximately **17 percentage points**.
 
-This represents a substantial improvement over the initial 81% result. The improvement is primarily attributed to training on the much larger dataset, while GPU acceleration made training the larger dataset considerably more practical.
+This experiment demonstrates how dataset size can have a major impact on neural network performance. It also demonstrates the practical benefit of GPU acceleration when training on a larger dataset.
 
+## 🛠️ Technologies Used
+
+* **Python**
+* **PyTorch**
+* **Pandas**
+* **NumPy**
+* **Scikit-learn**
+* **Matplotlib**
+* **Kaggle API**
+* **CUDA / GPU acceleration**
 
 ## ▶️ How to Run
 
-### 1. Clone the repository
+Install the required dependencies:
 
 ```bash
-git clone <your-repository-url>
-cd <your-repository-name>
+pip install torch pandas numpy scikit-learn matplotlib kagglehub
 ```
 
-### 2. Install dependencies
+Download the dataset using Kaggle:
 
-```bash
-pip install torch pandas scikit-learn matplotlib
+```python
+import kagglehub
+
+path = kagglehub.dataset_download(
+    "zalando-research/fashionmnist"
+)
+
+print("Path to dataset files:", path)
 ```
 
-### 3. Add the dataset
+Load the resulting CSV files with Pandas:
 
-Place the following file in the project directory:
+```python
+import pandas as pd
 
-```text
-fmnist_small.csv
+train_df = pd.read_csv(path + "/fashion-mnist_train.csv")
+test_df = pd.read_csv(path + "/fashion-mnist_test.csv")
 ```
 
-### 4. Run the notebook
+Then run the notebook from beginning to end.
 
-Open:
+## 📌 Key Takeaways
 
-```text
-fashion_mnist_pytorch.ipynb
-```
+This project demonstrates several important concepts in practical deep learning:
 
-and run the cells from top to bottom.
+1. **Larger datasets can significantly improve model performance.**
+2. **GPU acceleration makes training larger datasets much more practical.**
+3. **Normalization improves the neural network training process.**
+4. **PyTorch `Dataset` and `DataLoader` provide an efficient training pipeline.**
+5. A relatively simple fully connected neural network can achieve **97.95625% accuracy** on Fashion MNIST when trained with sufficient data.
 
-## 📌 Notes
-
-* The model uses raw flattened 28 × 28 images rather than convolutional layers.
-* Pixel values are normalized by dividing by `255`.
-* A custom PyTorch `Dataset` is used to convert the NumPy arrays into PyTorch tensors.
-* The training `DataLoader` shuffles the data, while the test `DataLoader` does not.
-* `torch.manual_seed(42)` is used for reproducibility.
-
-
-
-## 📄 License
-
-This project is intended for educational and experimentation purposes.
+The project provided a practical comparison between a small CPU-based experiment and a full-scale GPU-based training run, showing how both **data scale and computational resources** affect machine learning experiments.

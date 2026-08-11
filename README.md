@@ -206,6 +206,18 @@ Accuracy = Correct Predictions / Total Predictions
 ```
 
 and displayed as a percentage.
+## 📈 Results
+
+The initial experiment was performed using a smaller subset of approximately **6,000 Fashion-MNIST images** and was trained on the CPU. This achieved an accuracy of approximately **81%**.
+
+The dataset was then downloaded using the **Kaggle API**, providing the full Fashion-MNIST dataset with **60,000 training images**. The training pipeline was moved to a **GPU**, significantly reducing training time and allowing the larger dataset to be used efficiently.
+
+Using the full training dataset, the neural network achieved an accuracy of:
+
+**97.95625%**
+
+This represents a substantial improvement over the initial 81% result. The improvement is primarily attributed to training on the much larger dataset, while GPU acceleration made training the larger dataset considerably more practical.
+
 
 ## ▶️ How to Run
 

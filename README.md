@@ -1,10 +1,16 @@
 # Fashion MNIST Classification with PyTorch
 
-A deep learning project that classifies Fashion MNIST clothing images using a fully connected neural network built with **PyTorch**.
+A deep learning project that classifies Fashion MNIST clothing images using fully connected neural networks built with **PyTorch**.
 
-The project started as a small-scale experiment using approximately **6,000 Fashion MNIST images**, trained on a CPU. This initial model achieved around **81% accuracy**. To improve the model, the full Fashion MNIST dataset was downloaded using the **Kaggle API**, providing **60,000 training images** and 10,000 test images. The training process was then moved to a **GPU** to efficiently handle the larger dataset.
+The project started as a small-scale experiment using approximately **6,000 Fashion MNIST images**, trained on a CPU. The initial model achieved around **81% accuracy**.
 
-With the full training dataset, the model achieved an accuracy of **97.95625%**, demonstrating a significant improvement over the initial 81% result.
+The project was then expanded by downloading the full Fashion MNIST dataset using the **Kaggle API**, providing **60,000 training images** and **10,000 test images**. Training was moved to a **GPU** to make working with the larger dataset more efficient.
+
+With the full training dataset, the model achieved an accuracy of **97.95625%**, showing a significant improvement over the initial 81% result.
+
+The project was then extended further by experimenting with **GPU optimization, Batch Normalization, Dropout, Weight Decay, and Optuna hyperparameter optimization**.
+
+---
 
 ## 📌 Project Overview
 
@@ -15,12 +21,17 @@ This project demonstrates an end-to-end image classification workflow using PyTo
 * Visualizing Fashion MNIST images
 * Separating image pixels from class labels
 * Normalizing pixel values
-* Creating custom PyTorch `Dataset` and `DataLoader` objects
-* Building a fully connected neural network
-* Training the model using stochastic gradient descent
-* Using GPU acceleration for training
+* Creating PyTorch `Dataset` and `DataLoader` objects
+* Building fully connected neural networks
+* Training the models using stochastic gradient descent and other optimizers
+* Using GPU acceleration with CUDA
+* Adding Batch Normalization and Dropout
+* Experimenting with Weight Decay
+* Performing hyperparameter optimization using Optuna
 * Evaluating the model on unseen test data
-* Comparing model performance between a small and full dataset
+* Comparing model performance across different approaches
+
+---
 
 ## 📊 Dataset
 
@@ -28,7 +39,7 @@ The project uses the **Fashion MNIST** dataset.
 
 Each image is a grayscale **28 × 28 pixel** image, resulting in **784 input features** when flattened.
 
-The dataset contains:
+The full dataset contains:
 
 * **60,000 training images**
 * **10,000 test images**
@@ -52,6 +63,8 @@ The 10 classes are:
 |     8 | Bag           |
 |     9 | Ankle boot    |
 
+---
+
 ## 🔄 Data Preprocessing
 
 The image data is separated into features and labels:
@@ -71,11 +84,17 @@ X_train = X_train / 255.0
 X_test = X_test / 255.0
 ```
 
-The 784 pixel values represent the flattened version of each 28 × 28 image.
+Each 28 × 28 image is flattened into a vector containing **784 values**.
+
+The processed data is then converted into PyTorch datasets and loaded using `DataLoader`.
+
+---
 
 ## 🧠 Neural Network Architecture
 
-The project uses a fully connected feed-forward neural network:
+The main ANN used in the project is a fully connected feed-forward neural network.
+
+The basic architecture is:
 
 ```text
 784 Input Features
@@ -113,21 +132,24 @@ class MyNN(nn.Module):
         return self.model(x)
 ```
 
-The final layer contains 10 outputs, corresponding to the 10 Fashion MNIST classes.
+The final layer contains 10 outputs corresponding to the 10 Fashion MNIST classes.
+
+---
 
 ## ⚙️ Training
 
-The model uses:
+The initial and GPU experiments use a combination of the following training settings:
 
-* **Optimizer:** SGD
 * **Loss Function:** Cross Entropy Loss
+* **Optimizer:** SGD
 * **Learning Rate:** 0.1
 * **Batch Size:** 32
 * **Epochs:** 100
 * **Random Seed:** 42
+* **Hardware:** CPU for the initial experiment
 * **Hardware:** GPU for the full-dataset experiment
 
-The training process performs a forward pass, calculates the loss, performs backpropagation, and updates the model parameters.
+The basic training process performs a forward pass, calculates the loss, performs backpropagation, and updates the model parameters.
 
 ```python
 outputs = model(batch_features)
@@ -139,9 +161,184 @@ loss.backward()
 optimizer.step()
 ```
 
-## 🚀 CPU vs GPU and Dataset Comparison
+---
 
-An important part of this project was comparing the initial small-scale experiment with the full-dataset experiment.
+# 🚀 GPU Acceleration
+
+After the initial CPU experiment, the project was moved to GPU-based training.
+
+The model and training batches are moved to the available device:
+
+```python
+device = torch.device(
+    "cuda" if torch.cuda.is_available() else "cpu"
+)
+```
+
+The GPU implementation allows the model to take advantage of CUDA acceleration when an NVIDIA GPU is available.
+
+The project also uses `pin_memory=True` in the data loading pipeline to help improve data transfer between CPU memory and GPU memory.
+
+This became particularly useful when increasing the training dataset from approximately **6,000 images to the full 60,000 images**.
+
+---
+
+# 🔧 Model Optimization
+
+After developing the basic GPU version, the neural network was further optimized.
+
+The optimized model introduces:
+
+* **Batch Normalization**
+* **Dropout**
+* **Weight Decay**
+* GPU acceleration
+
+The optimized architecture follows the general structure:
+
+```text
+784 Input Features
+        ↓
+Linear(784 → 128)
+        ↓
+Batch Normalization
+        ↓
+ReLU
+        ↓
+Dropout
+        ↓
+Linear(128 → 64)
+        ↓
+Batch Normalization
+        ↓
+ReLU
+        ↓
+Dropout
+        ↓
+Linear(64 → 10)
+        ↓
+10 Class Outputs
+```
+
+Dropout is used to reduce overfitting, while Batch Normalization helps stabilize the training process.
+
+---
+
+# 🤖 Optuna Hyperparameter Optimization
+
+The final stage of the project introduces **Optuna** for automated hyperparameter optimization.
+
+Instead of manually selecting the model configuration, Optuna can test different combinations of hyperparameters and identify configurations that produce better validation performance.
+
+The optimization experiment explores parameters such as:
+
+* Number of hidden layers
+* Number of neurons
+* Learning rate
+* Dropout rate
+* Batch size
+* Optimizer
+* Weight decay
+* Number of training epochs
+
+The network is dynamically constructed based on the hyperparameters selected for each Optuna trial.
+
+The general structure is:
+
+```text
+Input
+  ↓
+Hidden Layer 1
+  ↓
+Batch Normalization
+  ↓
+ReLU
+  ↓
+Dropout
+  ↓
+Hidden Layer 2
+  ↓
+...
+  ↓
+Output Layer
+```
+
+The Optuna experiment is contained in:
+
+`OPTUNA OPTIMISED CODE.ipynb`
+
+---
+
+# 📓 Project Notebooks
+
+The repository contains four main notebooks.
+
+### 1. Basic PyTorch Implementation
+
+**`fashion_mnist_pytorch.ipynb`**
+
+This notebook contains the initial Fashion MNIST implementation using PyTorch.
+
+It covers:
+
+* Dataset loading
+* Data exploration
+* Image visualization
+* Data preprocessing
+* PyTorch datasets
+* DataLoaders
+* Neural network construction
+* Model training
+* Model evaluation
+
+[View Notebook](https://github.com/ZORAKEN/fmnstdataDL/blob/main/fashion_mnist_pytorch.ipynb)
+
+---
+
+### 2. GPU Implementation
+
+**`ann_fashion_mnist_pytorch_gpu.ipynb`**
+
+This notebook moves the ANN training process to the GPU.
+
+The main purpose is to investigate how GPU acceleration can be used when training on the larger Fashion MNIST dataset.
+
+[View Notebook](https://github.com/ZORAKEN/fmnstdataDL/blob/main/ann_fashion_mnist_pytorch_gpu.ipynb)
+
+---
+
+### 3. Optimized GPU Implementation
+
+**`ann_fashion_mnist_pytorch_gpu_optimized.ipynb`**
+
+This version builds on the GPU implementation by introducing additional optimization techniques.
+
+These include:
+
+* Batch Normalization
+* Dropout
+* Weight Decay
+* GPU acceleration
+
+[View Notebook](https://github.com/ZORAKEN/fmnstdataDL/blob/main/ann_fashion_mnist_pytorch_gpu_optimized.ipynb)
+
+---
+
+### 4. Optuna Optimization
+
+**`OPTUNA OPTIMISED CODE.ipynb`**
+
+This notebook uses Optuna to automatically search through different neural network architectures and training hyperparameters.
+
+The goal is to reduce the amount of manual experimentation required when selecting the best model configuration.
+
+[View Notebook](https://github.com/ZORAKEN/fmnstdataDL/blob/main/OPTUNA%20OPTIMISED%20CODE.ipynb)
+
+---
+
+# 📈 CPU vs GPU and Dataset Comparison
+
+One of the main experiments in this project was comparing the initial small-scale model with the full-dataset GPU implementation.
 
 ### Initial Experiment
 
@@ -151,7 +348,9 @@ The first version used approximately **6,000 images** and was trained on a **CPU
 
 ### Full Dataset Experiment
 
-The dataset was then downloaded through the **Kaggle API**, giving access to the full **60,000-image training set**. The model was moved to a **GPU** for training.
+The project was then expanded to use the full **60,000-image training dataset**.
+
+Training was moved to a **GPU**.
 
 **Accuracy: 97.95625%**
 
@@ -160,21 +359,37 @@ The dataset was then downloaded through the **Kaggle API**, giving access to the
 | Initial      | ~6,000 images | CPU      |          ~81% |
 | Full Dataset | 60,000 images | GPU      | **97.95625%** |
 
-The results show a substantial improvement when training on the full dataset. The GPU primarily provides faster and more efficient computation, while the increase in training data gives the neural network significantly more examples from which to learn.
+The results demonstrate a substantial improvement when moving from the smaller training set to the full Fashion MNIST dataset.
 
-## 📈 Results
+The increase in training data gives the model significantly more examples to learn from, while GPU acceleration makes training on the larger dataset more practical.
 
-The final model achieved:
+---
 
-**97.95625% accuracy**
+# 📊 Results
 
-on the evaluation dataset.
+The final reported model achieved:
 
-Compared with the initial **~81% accuracy**, this represents an improvement of approximately **17 percentage points**.
+## **97.95625% Accuracy**
 
-This experiment demonstrates how dataset size can have a major impact on neural network performance. It also demonstrates the practical benefit of GPU acceleration when training on a larger dataset.
+This compares with approximately:
 
-## 🛠️ Technologies Used
+## **81% Accuracy**
+
+from the initial small-scale experiment.
+
+That represents an improvement of approximately **17 percentage points**.
+
+| Metric          | Initial Model | Full Dataset Model |
+| --------------- | ------------: | -----------------: |
+| Training Images |        ~6,000 |             60,000 |
+| Hardware        |           CPU |                GPU |
+| Accuracy        |          ~81% |      **97.95625%** |
+
+The experiment demonstrates how both **training data size** and **computational resources** can have a significant impact on a deep learning workflow.
+
+---
+
+# 🛠️ Technologies Used
 
 * **Python**
 * **PyTorch**
@@ -182,18 +397,30 @@ This experiment demonstrates how dataset size can have a major impact on neural 
 * **NumPy**
 * **Scikit-learn**
 * **Matplotlib**
-* **Kaggle API**
-* **CUDA / GPU acceleration**
+* **Kaggle API / KaggleHub**
+* **CUDA**
+* **Optuna**
+* **Jupyter Notebook**
 
-## ▶️ How to Run
+---
+
+# ▶️ How to Run
+
+Clone the repository:
+
+```bash
+git clone https://github.com/ZORAKEN/fmnstdataDL.git
+
+cd fmnstdataDL
+```
 
 Install the required dependencies:
 
 ```bash
-pip install torch pandas numpy scikit-learn matplotlib kagglehub
+pip install torch pandas numpy scikit-learn matplotlib kagglehub optuna jupyter
 ```
 
-Download the dataset using Kaggle:
+Download the dataset using KaggleHub:
 
 ```python
 import kagglehub
@@ -205,25 +432,78 @@ path = kagglehub.dataset_download(
 print("Path to dataset files:", path)
 ```
 
-Load the resulting CSV files with Pandas:
+Load the CSV files:
 
 ```python
 import pandas as pd
 
-train_df = pd.read_csv(path + "/fashion-mnist_train.csv")
-test_df = pd.read_csv(path + "/fashion-mnist_test.csv")
+train_df = pd.read_csv(
+    path + "/fashion-mnist_train.csv"
+)
+
+test_df = pd.read_csv(
+    path + "/fashion-mnist_test.csv"
+)
 ```
 
-Then run the notebook from beginning to end.
+Start Jupyter Notebook:
 
-## 📌 Key Takeaways
+```bash
+jupyter notebook
+```
+
+Then run the notebooks from beginning to end.
+
+---
+
+# 📁 Project Structure
+
+```text
+fmnstdataDL/
+│
+├── fashion_mnist_pytorch.ipynb
+│
+├── ann_fashion_mnist_pytorch_gpu.ipynb
+│
+├── ann_fashion_mnist_pytorch_gpu_optimized.ipynb
+│
+├── OPTUNA OPTIMISED CODE.ipynb
+│
+└── README.md
+```
+
+---
+
+# 📌 Key Takeaways
 
 This project demonstrates several important concepts in practical deep learning:
 
-1. **Larger datasets can significantly improve model performance.**
-2. **GPU acceleration makes training larger datasets much more practical.**
-3. **Normalization improves the neural network training process.**
-4. **PyTorch `Dataset` and `DataLoader` provide an efficient training pipeline.**
-5. A relatively simple fully connected neural network can achieve **97.95625% accuracy** on Fashion MNIST when trained with sufficient data.
+1. **Training data size can have a major impact on model accuracy.**
+2. **GPU acceleration makes larger-scale neural network training more practical.**
+3. **Normalizing pixel values helps prepare image data for neural network training.**
+4. **PyTorch `Dataset` and `DataLoader` provide a structured training pipeline.**
+5. **Batch Normalization and Dropout can be used to improve the training process and reduce overfitting.**
+6. **Weight Decay provides an additional form of regularization.**
+7. **Optuna can automate the search for effective hyperparameters.**
+8. A relatively simple fully connected neural network achieved **97.95625% accuracy** on the Fashion MNIST experiment.
 
-The project provided a practical comparison between a small CPU-based experiment and a full-scale GPU-based training run, showing how both **data scale and computational resources** affect machine learning experiments.
+Overall, this project shows the progression from a basic **CPU-based ANN trained on a small dataset** to a more advanced **GPU-based and optimized deep learning workflow**, followed by **automated hyperparameter optimization with Optuna**.
+---
+
+## ⭐ Project Summary
+
+**Small Dataset → CPU → ~81%**
+
+↓
+
+**Full Dataset → GPU → 97.95625%**
+
+↓
+
+**Batch Normalization + Dropout + Weight Decay**
+
+↓
+
+**Optuna Hyperparameter Optimization**
+
+This project demonstrates how a simple Fashion MNIST classification problem can be progressively improved through **more training data, GPU acceleration, model optimization, and automated hyperparameter tuning**.
